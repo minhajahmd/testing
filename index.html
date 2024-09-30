@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <title>AR Interactive Product Catalog</title>
+</head>
+<body>
+    <header>
+        <h1>AR Interactive Product Catalog</h1>
+    </header>
+    
+    <nav>
+        <ul id="product-list">
+            <!-- Product items will be dynamically inserted here -->
+        </ul>
+    </nav>
+
+    <section id="product-details" class="hidden">
+        <h2 id="product-name"></h2>
+        <img id="product-image" alt="Product Image" style="width: 300px; height: 300px;">
+        <p id="product-description"></p>
+        <button id="ar-button">View in AR</button>
+        <button id="back-button">Back to Catalog</button>
+
+        <model-viewer id="model-viewer" alt="Product 3D model" src="" ar environment-image="shared-assets/environments/moon_1k.hdr" poster="" shadow-intensity="1" camera-controls touch-action="pan-y">
+        </model-viewer>
+    </section>
+
+
+    <footer>
+        <p>&copy; 2024 AR Interactive Product Catalog</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
