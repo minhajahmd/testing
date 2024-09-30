@@ -2,10 +2,10 @@ const products = [
     {
         id: 1,
         name: 'Velvet Chair',
-        image: 'images/chair.jpg', // Path to product image
+        image: 'chair.jpg', // Path to product image
         description: 'Explore our stylish chair, perfect for any living space!',
-        model: 'models/chair.glb',  // Add your 3D model path here
-        poster: 'images/chair-poster.jpg'  // Poster image for the model-viewer
+        model: 'chair.glb',  // Add your 3D model path here
+        poster: 'chair-poster.jpg'  // Poster image for the model-viewer
     },
     {
         id: 2,
