@@ -1,26 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Product Catalog</title>
-
-    <!-- Link your CSS for basic styling -->
-    <link rel="stylesheet" href="styles.css">
-
-    <!-- Importing Three.js for WebXR rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/webxr/VRButton.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/webxr/ARButton.js"></script>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/webxr/ARButton.js"></script>
-
+    <title>AR Interactive Product Catalog</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link type="text/css" rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.js" crossorigin="anonymous"></script>
 </head>
-<body>
 
+<body>
     <header>
         <h1>AR Interactive Product Catalog</h1>
     </header>
@@ -35,14 +24,130 @@
         <h2 id="product-name"></h2>
         <img id="product-image" alt="Product Image" style="width: 300px; height: 300px;">
         <p id="product-description"></p>
-        <button id="ar-button">View in AR</button>
+        <button id="view-in-ar-button">View in AR</button>
         <button id="back-button">Back to Catalog</button>
     </section>
 
-    <footer>
-        <p>&copy; 2025 AR Interactive Product Catalog</p>
-    </footer>
+    <script type="module">
+        import { ARButton } from 'https://unpkg.com/three@0.126.0/examples/jsm/webxr/ARButton.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.126.0/examples/jsm/loaders/GLTFLoader.js';
 
-    <script src="script.js"></script>
+        const products = [
+            {
+                id: 1,
+                name: 'Velvet Chair',
+                image: 'chair.jpg',
+                description: 'Explore our stylish chair, perfect for any living space!',
+                model: 'chair.glb'
+            },
+            {
+                id: 2,
+                name: 'Wall Art',
+                image: 'images/product2.jpg',
+                description: 'Stylish wall art for your home or office.',
+                model: 'models/art.glb'
+            },
+            // Add more products as needed
+        ];
+
+        const productList = document.getElementById('product-list');
+        const productDetails = document.getElementById('product-details');
+        const productName = document.getElementById('product-name');
+        const productImage = document.getElementById('product-image');
+        const productDescription = document.getElementById('product-description');
+        const viewInArButton = document.getElementById('view-in-ar-button');
+        const backButton = document.getElementById('back-button');
+
+        let camera, scene, renderer;
+        let currentModel;
+
+        init();
+        animate();
+
+        function init() {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+            light.position.set(0.5, 1, 0.25);
+            scene.add(light);
+
+            document.body.appendChild(ARButton.createButton(renderer));
+
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Display product list dynamically
+            products.forEach(product => {
+                const li = document.createElement('li');
+                li.textContent = product.name;
+                li.onclick = () => showProductDetails(product);
+                productList.appendChild(li);
+            });
+        }
+
+        function showProductDetails(product) {
+            productName.textContent = product.name;
+            productImage.src = product.image;
+            productDescription.textContent = product.description;
+
+            // Load the model for AR
+            loadModel(product.model);
+
+            productDetails.classList.remove('hidden');
+            productList.classList.add('hidden');
+        }
+
+        function loadModel(modelPath) {
+            // Remove the current model if it exists
+            if (currentModel) {
+                scene.remove(currentModel);
+            }
+
+            // Load the new model
+            const loader = new GLTFLoader();
+            loader.load(modelPath, (gltf) => {
+                currentModel = gltf.scene;
+                currentModel.position.set(0, -0.5, -0.5); // Adjust position as needed
+                scene.add(currentModel);
+            }, undefined, (error) => {
+                console.error('An error occurred while loading the model:', error);
+            });
+        }
+
+        viewInArButton.onclick = () => {
+            // Start AR session
+            renderer.xr.enabled = true;
+        };
+
+        backButton.onclick = () => {
+            productDetails.classList.add('hidden');
+            productList.classList.remove('hidden');
+        };
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            renderer.setAnimationLoop(render);
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
 </body>
+
 </html>
