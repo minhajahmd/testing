@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link type="text/css" rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -27,6 +27,13 @@
         <button id="view-in-ar-button">View in AR</button>
         <button id="back-button">Back to Catalog</button>
     </section>
+
+    <!-- Color Selection UI -->
+    <div id="color-options" class="hidden">
+        <button id="color-green">Green</button>
+        <button id="color-black">Black</button>
+        <button id="color-default">Default</button>
+    </div>
 
     <script type="module">
         import { ARButton } from 'https://unpkg.com/three@0.126.0/examples/jsm/webxr/ARButton.js';
@@ -57,9 +64,14 @@
         const productDescription = document.getElementById('product-description');
         const viewInArButton = document.getElementById('view-in-ar-button');
         const backButton = document.getElementById('back-button');
+        const colorOptions = document.getElementById('color-options');
+        const colorGreenButton = document.getElementById('color-green');
+        const colorBlackButton = document.getElementById('color-black');
+        const colorDefaultButton = document.getElementById('color-default');
 
         let camera, scene, renderer;
         let currentModel;
+        let defaultColor; // To store the default color
 
         init();
         animate();
@@ -93,6 +105,11 @@
                 li.onclick = () => showProductDetails(product);
                 productList.appendChild(li);
             });
+
+            // Handle color change
+            colorGreenButton.onclick = () => changeModelColor(0x00ff00); // Green
+            colorBlackButton.onclick = () => changeModelColor(0x000000); // Black
+            colorDefaultButton.onclick = () => changeModelColor(defaultColor); // Default
         }
 
         function showProductDetails(product) {
@@ -105,6 +122,7 @@
 
             productDetails.classList.remove('hidden');
             productList.classList.add('hidden');
+            colorOptions.classList.remove('hidden'); // Show color options
         }
 
         function loadModel(modelPath) {
@@ -118,10 +136,30 @@
             loader.load(modelPath, (gltf) => {
                 currentModel = gltf.scene;
                 currentModel.position.set(0, -0.5, -0.5); // Adjust position as needed
+                // currentModel.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
+
+                // Store the default color
+                currentModel.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        defaultColor = child.material.color.getHex();
+                    }
+                });
+
                 scene.add(currentModel);
             }, undefined, (error) => {
                 console.error('An error occurred while loading the model:', error);
             });
+        }
+
+        function changeModelColor(color) {
+            if (currentModel) {
+                currentModel.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.color.set(color);
+                        child.material.needsUpdate = true;
+                    }
+                });
+            }
         }
 
         viewInArButton.onclick = () => {
@@ -132,6 +170,7 @@
         backButton.onclick = () => {
             productDetails.classList.add('hidden');
             productList.classList.remove('hidden');
+            colorOptions.classList.add('hidden'); // Hide color options
         };
 
         function onWindowResize() {
