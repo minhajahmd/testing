@@ -30,9 +30,9 @@
 
     <!-- Color Selection UI -->
     <div id="color-options" class="hidden">
-        <button id="color-green">Green</button>
+        <button id="color-green">Dark Green</button>
         <button id="color-black">Black</button>
-        <button id="color-default">Default</button>
+        <button id="color-default">Blue</button>
     </div>
 
     <script type="module">
@@ -72,6 +72,8 @@
         let camera, scene, renderer;
         let currentModel;
         let defaultColor; // To store the default color
+        let initialDistance = null;
+        let initialScale = new THREE.Vector3();
 
         init();
         animate();
@@ -110,6 +112,10 @@
             colorGreenButton.onclick = () => changeModelColor(0x00ff00); // Green
             colorBlackButton.onclick = () => changeModelColor(0x000000); // Black
             colorDefaultButton.onclick = () => changeModelColor(defaultColor); // Default
+
+            // Add event listeners for touch events
+            renderer.domElement.addEventListener('touchstart', onTouchStart, false);
+            renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         }
 
         function showProductDetails(product) {
@@ -136,7 +142,6 @@
             loader.load(modelPath, (gltf) => {
                 currentModel = gltf.scene;
                 currentModel.position.set(0, -0.5, -0.5); // Adjust position as needed
-                // currentModel.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
 
                 // Store the default color
                 currentModel.traverse((child) => {
@@ -160,6 +165,41 @@
                     }
                 });
             }
+        }
+
+        function onTouchStart(event) {
+            if (event.touches.length === 2) {
+                // Calculate the initial distance between the two touch points
+                initialDistance = getDistance(event.touches[0], event.touches[1]);
+                // Store the initial scale of the model
+                if (currentModel) {
+                    initialScale.copy(currentModel.scale);
+                }
+            }
+        }
+
+        function onTouchMove(event) {
+            if (event.touches.length === 2 && initialDistance !== null) {
+                // Calculate the new distance between the two touch points
+                const newDistance = getDistance(event.touches[0], event.touches[1]);
+                // Calculate the scale factor
+                const scaleFactor = newDistance / initialDistance;
+
+                // Apply the scale factor to the model
+                if (currentModel) {
+                    currentModel.scale.set(
+                        initialScale.x * scaleFactor,
+                        initialScale.y * scaleFactor,
+                        initialScale.z * scaleFactor
+                    );
+                }
+            }
+        }
+
+        function getDistance(touch1, touch2) {
+            const dx = touch1.pageX - touch2.pageX;
+            const dy = touch1.pageY - touch2.pageY;
+            return Math.sqrt(dx * dx + dy * dy);
         }
 
         viewInArButton.onclick = () => {
