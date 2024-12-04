@@ -1,14 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <title>AR Interactive Product Catalog</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link type="text/css" rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" crossorigin="anonymous"></script>
-</head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow-y: auto;
+        }
 
+        header, nav, section {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        #product-list li {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            list-style-type: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #product-list li:hover {
+            background-color: #f0f0f0;
+        }
+
+        #product-details, #color-options, #view-in-ar-button, #back-button {
+            display: none;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        button {
+            transform: scale(1.2);
+            margin: 10px;
+        }
+
+        #renderer-container {
+            width: 100%;
+            max-width: 600px;
+            height: 50vh; 
+            margin: 20px 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
 <body>
     <header>
         <h1>AR Interactive Product Catalog</h1>
@@ -16,24 +68,24 @@
 
     <nav>
         <ul id="product-list">
-            <!-- Product items will be dynamically inserted here -->
         </ul>
     </nav>
 
-    <section id="product-details" class="hidden">
+    <section id="product-details">
         <h2 id="product-name"></h2>
-        <img id="product-image" alt="Product Image" style="width: 300px; height: 300px;">
+        <img id="product-image" alt="Product Image" style="width: 40%;">
         <p id="product-description"></p>
-        <button id="view-in-ar-button">View in AR</button>
+
+        <!-- Color Selection UI -->
+        <div id="color-options">
+            <button id="color-default">Blue</button>
+            <button id="color-green">Dark Green</button>
+            <button id="color-black">Black</button>
+        </div>
         <button id="back-button">Back to Catalog</button>
     </section>
 
-    <!-- Color Selection UI -->
-    <div id="color-options" class="hidden">
-        <button id="color-green">Dark Green</button>
-        <button id="color-black">Black</button>
-        <button id="color-default">Blue</button>
-    </div>
+    <div id="renderer-container"></div> <!-- Container for the renderer -->
 
     <script type="module">
         import { ARButton } from 'https://unpkg.com/three@0.126.0/examples/jsm/webxr/ARButton.js';
@@ -43,16 +95,37 @@
             {
                 id: 1,
                 name: 'Velvet Chair',
-                image: 'chair.jpg',
-                description: 'Explore our stylish chair, perfect for any living space!',
+                image: 'images/chair.png',
+                description: 'Stay productive and comfortable with our ergonomic task chair.',
                 model: 'chair.glb'
             },
             {
                 id: 2,
                 name: 'Wall Art',
-                image: 'images/product2.jpg',
-                description: 'Stylish wall art for your home or office.',
-                model: 'models/art.glb'
+                image: 'images/wall_art.png',
+                description: 'Transform your blank walls into captivating stories.',
+                model: 'models/wall_art.glb'
+            },
+            {
+                id: 3,
+                name: 'Lamp',
+                image: 'images/lamp.jpg',
+                description: 'Light up your space with style and charm.',
+                model: 'models/lamp.glb'
+            },
+            {
+                id: 4,
+                name: 'Table',
+                image: 'images/table.jpg',
+                description: 'Elevate your space with the timeless charm of a simple table.',
+                model: 'models/furniture.glb'
+            },
+            {
+                id: 5,
+                name: 'Gift Box',
+                image: 'images/giftbox.jpg',
+                description: 'Unwrap moments of joy with our beautifully crafted gift box.',
+                model: 'models/giftbox.glb'
             },
             // Add more products as needed
         ];
@@ -68,6 +141,7 @@
         const colorGreenButton = document.getElementById('color-green');
         const colorBlackButton = document.getElementById('color-black');
         const colorDefaultButton = document.getElementById('color-default');
+        const rendererContainer = document.getElementById('renderer-container');
 
         let camera, scene, renderer;
         let currentModel;
@@ -79,18 +153,17 @@
         animate();
 
         function init() {
-            const container = document.createElement('div');
-            document.body.appendChild(container);
-
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
+            camera = new THREE.PerspectiveCamera(70, rendererContainer.clientWidth / rendererContainer.clientHeight, 0.01, 40);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Set the renderer size to fit the container
+            renderer.setSize(rendererContainer.clientWidth, rendererContainer.clientHeight);
             renderer.xr.enabled = true;
-            container.appendChild(renderer.domElement);
+            rendererContainer.appendChild(renderer.domElement);
 
             const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
             light.position.set(0.5, 1, 0.25);
@@ -117,7 +190,6 @@
             renderer.domElement.addEventListener('touchstart', onTouchStart, false);
             renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         }
-
         function showProductDetails(product) {
             productName.textContent = product.name;
             productImage.src = product.image;
@@ -126,10 +198,14 @@
             // Load the model for AR
             loadModel(product.model);
 
-            productDetails.classList.remove('hidden');
-            productList.classList.add('hidden');
-            colorOptions.classList.remove('hidden'); // Show color options
+            // Show product details and related buttons
+            productDetails.style.display = 'block';
+            productList.style.display = 'none';
+            colorOptions.style.display = 'block'; // Show color options
+            viewInArButton.style.display = 'block'; // Show AR button
+            backButton.style.display = 'block'; // Show back button
         }
+
 
         function loadModel(modelPath) {
             // Remove the current model if it exists
@@ -208,15 +284,17 @@
         };
 
         backButton.onclick = () => {
-            productDetails.classList.add('hidden');
-            productList.classList.remove('hidden');
-            colorOptions.classList.add('hidden'); // Hide color options
+            productDetails.style.display = 'none';
+            productList.style.display = 'block';
+            colorOptions.style.display = 'none'; // Hide color options
+            viewInArButton.style.display = 'none'; // Hide AR button
+            backButton.style.display = 'none'; // Hide back button
         };
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = rendererContainer.clientWidth / rendererContainer.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(rendererContainer.clientWidth, rendererContainer.clientHeight); // Adjust size on resize
         }
 
         function animate() {
@@ -228,5 +306,4 @@
         }
     </script>
 </body>
-
 </html>
